@@ -1,0 +1,50 @@
+name: Streaming Fraud MLOps CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  lint-feast-test:
+    name: Ruff Lint, Feast Validation, Pytest & Docker Sanity
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install System Libraries & Python Dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends libgomp1
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run Ruff Linter & Format Check
+        run: |
+          ruff check src feature_repo tests
+          ruff format --check src feature_repo tests
+
+      - name: Train LightGBM Focal Loss Model & Export ONNX
+        run: |
+          python -m src.training.train
+
+      - name: Validate Feast Feature Store Definitions (Dry-Run)
+        working-directory: feature_repo
+        run: |
+          feast apply --dry-run || feast plan
+
+      - name: Execute Unit & Latency Benchmark Suite (Pytest)
+        run: |
+          pytest -v
+
+      - name: Docker Compose Configuration Sanity Check
+        run: |
+          docker compose config -q

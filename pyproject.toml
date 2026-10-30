@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "streaming-fraud-mlops"
+version = "1.0.0"
+description = "Real-time event streaming ML pipeline for financial transaction fraud detection with Feast, LightGBM/ONNX Runtime, and Evidently AI drift guard."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Sawy05" }
+]
+keywords = ["mlops", "fraud-detection", "kafka", "redpanda", "feast", "onnxruntime", "lightgbm", "evidently", "prometheus"]
+dependencies = [
+    "confluent-kafka>=2.4.0",
+    "duckdb>=1.0.0",
+    "evidently>=0.4.30",
+    "fakeredis>=2.23.0",
+    "fastapi>=0.111.0",
+    "feast>=0.38.0",
+    "httpx>=0.27.0",
+    "lightgbm>=4.3.0",
+    "numpy>=1.26.0",
+    "onnx>=1.16.0",
+    "onnxmltools>=1.12.0",
+    "onnxruntime>=1.18.0",
+    "pandas>=2.2.0",
+    "prometheus-client>=0.20.0",
+    "pyarrow>=16.0.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "python-dotenv>=1.0.1",
+    "redis>=5.0.0",
+    "requests>=2.32.0",
+    "scikit-learn>=1.5.0",
+    "scipy>=1.13.0",
+    "skl2onnx>=1.17.0",
+    "uvicorn>=0.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "locust>=2.29.0",
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-benchmark>=4.0.0",
+    "ruff>=0.5.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "feature_repo*"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "feature_repo", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "B", "UP"]
+ignore = ["E501", "B008"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-v --tb=short -p no:dash"

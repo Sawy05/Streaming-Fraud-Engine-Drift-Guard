@@ -1,0 +1,59 @@
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+
+# Data Stores & Feast Registry
+data/*.parquet
+data/*.duckdb
+data/*.duckdb.wal
+data/*.db
+data/registry.db
+feature_repo/data/
+
+# Kafka & Redpanda Logs
+kafka-logs/
+redpanda-data/
+*.kafka.log
+logs/
+
+# Redis Dumps
+dump.rdb
+appendonly.aof
+redis-data/
+
+# ONNX Intermediate Weights & Model Checkpoints
+models/*.onnx.tmp
+models/*_intermediate.onnx
+models/*.ckpt
+models/*.bin
+models/*.pt
+models/*.pkl
+models/fraud_lgbm.txt
+models/fraud_model.onnx
+models/model_metadata.json
+
+# Python Bytecode & Build Artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Testing, Benchmarking & Linting Caches
+.pytest_cache/
+.benchmarks/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+reports/
