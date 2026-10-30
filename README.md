@@ -1,4 +1,4 @@
-# Streaming Fraud Engine & Drift Guard (`Streaming-Fraud-Engine-Drift-Guard`)
+# Streaming Fraud Engine & Drift Guard 
 
 [![CI Pipeline](https://github.com/Sawy05/Streaming-Fraud-Engine-Drift-Guard/actions/workflows/ci.yml/badge.svg)](https://github.com/Sawy05/Streaming-Fraud-Engine-Drift-Guard/actions)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
