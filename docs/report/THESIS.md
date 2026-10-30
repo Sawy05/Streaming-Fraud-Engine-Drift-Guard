@@ -2,7 +2,7 @@
 
 **Author:** Ahmed Elsawy (`@Sawy05`)  
 **Affiliation:** Principal AI Research Scientist & Staff ML Systems Engineer  
-**Repository:** [Sawy05/streaming-fraud-mlops](https://github.com/Sawy05/streaming-fraud-mlops)  
+**Repository:** [Sawy05/Streaming-Fraud-Engine-Drift-Guard](https://github.com/Sawy05/Streaming-Fraud-Engine-Drift-Guard)  
 **Date:** October 2026  
 **Document Classification:** Technical Thesis, Architecture Proposal & Empirical Validation Report  
 
@@ -349,7 +349,7 @@ The decoupled containerized topology minimizes infrastructure overhead:
 
 ## 8. Conclusion
 
-This report presented the technical architecture, mathematical derivation, and empirical validation of **Streaming Fraud Engine & Drift Guard**. By tightly coupling point-in-time correct feature stores, analytical Focal Loss tree boosting, compiled ONNX Runtime graph execution, and dual-track statistical drift detection, the system achieves state-of-the-art PR-AUC ($0.884$) while outperforming production tail-latency SLAs ($2.02\text{ ms}$ P99 vs. $15.0\text{ ms}$ target). The entire pipeline is open-source, containerized, and reproducible under [Sawy05/streaming-fraud-mlops](https://github.com/Sawy05/streaming-fraud-mlops).
+This report presented the technical architecture, mathematical derivation, and empirical validation of **Streaming Fraud Engine & Drift Guard**. By tightly coupling point-in-time correct feature stores, analytical Focal Loss tree boosting, compiled ONNX Runtime graph execution, and dual-track statistical drift detection, the system achieves state-of-the-art PR-AUC ($0.884$) while outperforming production tail-latency SLAs ($2.02\text{ ms}$ P99 vs. $15.0\text{ ms}$ target). The entire pipeline is open-source, containerized, and reproducible under [Sawy05/Streaming-Fraud-Engine-Drift-Guard](https://github.com/Sawy05/Streaming-Fraud-Engine-Drift-Guard).
 
 ---
 

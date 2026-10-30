@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_SLUG="Sawy05/streaming-fraud-mlops"
+REPO_SLUG="Sawy05/Streaming-Fraud-Engine-Drift-Guard"
 DEFAULT_BRANCH="main"
 
 echo "=================================================================="

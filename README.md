@@ -1,6 +1,6 @@
-# Streaming Fraud Engine & Drift Guard (`streaming-fraud-mlops`)
+# Streaming Fraud Engine & Drift Guard (`Streaming-Fraud-Engine-Drift-Guard`)
 
-[![CI Pipeline](https://github.com/Sawy05/streaming-fraud-mlops/actions/workflows/ci.yml/badge.svg)](https://github.com/Sawy05/streaming-fraud-mlops/actions)
+[![CI Pipeline](https://github.com/Sawy05/Streaming-Fraud-Engine-Drift-Guard/actions/workflows/ci.yml/badge.svg)](https://github.com/Sawy05/Streaming-Fraud-Engine-Drift-Guard/actions)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![ONNX Runtime](https://img.shields.io/badge/ONNX_Runtime-Sub--15ms_P99-success.svg)](https://onnxruntime.ai/)
 [![Feast Feature Store](https://img.shields.io/badge/Feast-Redis_%2B_DuckDB-orange.svg)](https://feast.dev/)
@@ -209,7 +209,7 @@ make stream-drift
 make test
 ```
 
-### Step 8: Publish to GitHub (`Sawy05/streaming-fraud-mlops`)
+### Step 8: Publish to GitHub (`Sawy05/Streaming-Fraud-Engine-Drift-Guard`)
 ```bash
 make git-sync
 ```

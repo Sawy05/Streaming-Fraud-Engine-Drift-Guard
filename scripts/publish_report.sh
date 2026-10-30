@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_OWNER="Sawy05"
-REPO_NAME="streaming-fraud-mlops"
+REPO_NAME="Streaming-Fraud-Engine-Drift-Guard"
 REPO_SLUG="${REPO_OWNER}/${REPO_NAME}"
 DEFAULT_BRANCH="main"
 COMMIT_MSG="docs: publish comprehensive thesis, system proposal, and CI compilation workflow"
