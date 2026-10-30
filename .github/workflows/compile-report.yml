@@ -1,0 +1,56 @@
+name: Compile Academic Report & Publish Release
+
+on:
+  push:
+    paths:
+      - "docs/report/**"
+      - ".github/workflows/compile-report.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-pdf:
+    name: Compile LaTeX Thesis to PDF
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Compile LaTeX Document
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          working_directory: docs/report/latex
+          args: -pdf -file-line-error -interaction=nonstopmode
+
+      - name: Organize Compiled PDF Artifact
+        run: |
+          mkdir -p docs/report
+          cp docs/report/latex/main.pdf docs/report/project_thesis_report.pdf
+
+      - name: Upload PDF Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: project_thesis_report
+          path: docs/report/project_thesis_report.pdf
+          if-no-files-found: error
+
+      - name: Create or Update GitHub Documentation Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.0.0-documentation
+          name: "Project Thesis & Technical Report v1.0.0"
+          body: |
+            Automated publication of the academic and industry technical thesis:
+            - **Title:** Real-Time Event-Driven Machine Learning Operations Pipeline for Financial Fraud Detection
+            - **Author:** Ahmed Elsawy (@Sawy05)
+            - **Compiled Artifact:** `project_thesis_report.pdf`
+          files: docs/report/project_thesis_report.pdf
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

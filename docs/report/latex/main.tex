@@ -1,0 +1,60 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=red
+}
+
+\begin{document}
+
+\title{Real-Time Event-Driven Machine Learning Operations Pipeline for Financial Fraud Detection with Point-in-Time Feature Store Integration and Continuous Drift Guard}
+
+\author{\IEEEauthorblockN{Ahmed Elsawy}
+\IEEEauthorblockA{\textit{Principal AI Research Scientist \& Staff ML Systems Engineer} \\
+\textit{GitHub: @Sawy05} \\
+Cairo, Egypt \\
+Email: Sawy05@users.noreply.github.com}
+}
+
+\maketitle
+
+\input{abstract.tex}
+
+\section{Introduction}
+\label{sec:intro}
+The exponential expansion of digital payments, instant settlement networks, and cross-border digital financial services has drastically heightened the urgency for automated real-time fraud mitigation systems. Fraud syndicates continuously evolve techniques—such as rapid card-testing bursts, synthetic account generation, and distributed account takeover (ATO)—inflicting severe financial and reputational damage on institutions worldwide.
+
+Operating machine learning models in modern transaction environments entails rigorous constraints:
+\begin{enumerate}
+    \item \textbf{Sub-15ms Latency Budgets:} Card networks and payment gateways enforce tight authorization timeouts, allocating at most 10--20\,ms to fraud scoring.
+    \item \textbf{Extreme Class Imbalance:} Fraudulent events represent a tiny fraction of total transactions ($\sim 1.5\%$), rendering standard symmetric loss functions ineffective.
+    \item \textbf{Temporal Consistency:} Training pipelines must eliminate lookahead feature leakage by ensuring point-in-time consistency.
+    \item \textbf{Continuous Non-Stationary Drift:} Adversarial adaptation induces rapid covariate and concept drift, necessitating real-time statistical observability.
+\end{enumerate}
+
+To address these challenges comprehensively, this work introduces \textbf{Streaming Fraud Engine \& Drift Guard}, a modular, high-throughput MLOps pipeline.
+
+\input{architecture.tex}
+
+\input{experiments.tex}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

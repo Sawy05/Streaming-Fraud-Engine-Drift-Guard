@@ -1,0 +1,105 @@
+\section{Problem Formulation \& Mathematical Foundations}
+\label{sec:formulation}
+
+\subsection{State Space and Classification Formulation}
+Let $\mathcal{X} \subset \mathbb{R}^D$ denote the $D$-dimensional feature space ($D=12$) and $\mathcal{Y} = \{0, 1\}$ denote the binary decision space, where $Y = 1$ denotes a fraudulent transaction and $Y = 0$ denotes a legitimate transaction. An incoming transaction event arriving at continuous time $t \in \mathbb{R}^+$ is represented by the tuple:
+\begin{equation}
+e_i = \langle \text{id}_i, u_i, a_i, c_i, t_i, \lambda_i, \phi_i, \delta_i \rangle
+\end{equation}
+where $\text{id}_i$ is the event UUID, $u_i \in \mathcal{U}$ is the account entity identifier, $a_i \in \mathbb{R}^+$ is the monetary amount, $c_i \in \mathcal{C}$ is the merchant category classification, $t_i$ is the UTC timestamp, $(\lambda_i, \phi_i)$ are geographical coordinates, and $\delta_i$ is the device fingerprint string.
+
+The classification objective is to estimate the posterior probability $p_i = \mathbb{P}(Y_i = 1 \mid \mathbf{x}_i)$, where $\mathbf{x}_i = \psi(e_i, \mathcal{S}(t_i))$ is the feature vector synthesized from event $e_i$ and the online state $\mathcal{S}(t_i)$ of the feature store materialized strictly prior to $t_i$.
+
+\subsection{Analytical Binary Focal Loss Objective}
+Under extreme class skew where the prior probability $\mathbb{P}(Y = 1) \ll 0.05$, conventional Binary Cross-Entropy (BCE) loss gradients are overwhelmed by easy legitimate transactions ($p_t \to 1$). To focus gradient updates on hard, ambiguous fraud events near the decision boundary, we implement the Binary Focal Loss formulation~\cite{lin2017focal}:
+\begin{equation}
+\mathcal{L}_{\text{Focal}}(p_t) = -\alpha_t (1 - p_t)^\gamma \log(p_t)
+\end{equation}
+where $\gamma = 2.0$ is the focusing parameter, and $\alpha_t \in (0, 1)$ is the class weighting coefficient:
+\begin{equation}
+\alpha_t = \begin{cases} \alpha & \text{if } y = 1 \\ 1 - \alpha & \text{if } y = 0 \end{cases}
+\end{equation}
+with $\alpha = 0.75$. For tree boosting via LightGBM~\cite{ke2017lightgbm}, the objective requires the first-order gradient $g_i = \frac{\partial \mathcal{L}}{\partial z_i}$ and positive-definite second-order Hessian $h_i = \frac{\partial^2 \mathcal{L}}{\partial z_i^2}$ with respect to the raw logit $z_i$, where $p_i = \sigma(z_i) = \frac{1}{1 + e^{-z_i}}$.
+
+Applying the chain rule $\frac{\partial \mathcal{L}}{\partial z_i} = \frac{\partial \mathcal{L}}{\partial p_t} \frac{\partial p_t}{\partial p} \frac{\partial p}{\partial z_i}$ with $s_i = 1$ if $y_i=1$ and $s_i = -1$ if $y_i=0$, the analytical first-order gradient evaluates to:
+\begin{equation}
+g_i = \alpha_t \cdot s_i \cdot (1 - p_t)^\gamma \left[ \gamma \, p_t \log(p_t) + p_t - 1 \right]
+\end{equation}
+Differentiating $g_i$ with respect to $z_i$ and enforcing positive semi-definiteness yields the regularized second-order Hessian:
+\begin{equation}
+h_i = \max\left( \alpha_t \cdot p(1 - p) \cdot \left| -\gamma (1 - p_t)^{\gamma - 1} u(p_t) + (1 - p_t)^\gamma \frac{\partial u}{\partial p_t} \right|, \, \epsilon \right)
+\end{equation}
+where $u(p_t) = \gamma p_t \log(p_t) + p_t - 1$, $\frac{\partial u}{\partial p_t} = \gamma (\log(p_t) + 1) + 1$, and $\epsilon = 10^{-5}$ guarantees numerical stability during Newton-Raphson tree leaf splitting.
+
+\subsection{Point-in-Time Temporal Feature Joins}
+Let $\mathcal{T} = \{(e_i, y_i, t_i)\}_{i=1}^N$ denote the historical transaction spine and let $\mathcal{F}_k = \{(u, \mathbf{v}_\tau, \tau)\}$ denote an entity feature table with feature updates recorded at timestamp $\tau$. The point-in-time join operator $\bowtie_{ASOF}$ evaluates:
+\begin{equation}
+(\mathcal{T} \bowtie_{ASOF} \mathcal{F}_k)_i = \mathbf{v}_{\tau^*}, \quad \tau^* = \max \{ \tau \le t_i \mid \text{entity}(\mathcal{F}_k) = u_i \}
+\end{equation}
+This formulation guarantees that historical training rows incorporate only features available at or before transaction execution $t_i$. Any inclusion where $\tau > t_i$ represents lookahead feature leakage.
+
+\subsection{Distributional Drift Divergence Metrics}
+To detect adversarial non-stationarity over rolling windows $\mathcal{W}_t = \{\mathbf{x}_j, p_j\}_{j=t-W+1}^t$ ($W=500$) without requiring immediate delayed chargeback labels, we evaluate two continuous statistical metrics:
+
+\subsubsection{Two-Sample Kolmogorov-Smirnov Test}
+For univariate feature marginals $F_{\text{ref}}(x)$ and $F_{\text{curr}}(x)$, the two-sample KS statistic~\cite{kolmogorov1933sulla,smirnov1948table} measures the supremum empirical discrepancy:
+\begin{equation}
+D_{n, m} = \sup_{x \in \mathbb{R}} \left| F_{\text{ref}, n}(x) - F_{\text{curr}, m}(x) \right|
+\end{equation}
+The null hypothesis $H_0: F_{\text{ref}} = F_{\text{curr}}$ is rejected at significance level $\alpha = 0.05$ if the asymptotic $p$-value satisfies $p_{\text{KS}} < 0.05$.
+
+\subsubsection{Scale-Normalized Wasserstein-1 Distance}
+The Wasserstein-1 (Earth Mover's) distance~\cite{villani2008optimal} measures the total transport cost:
+\begin{equation}
+W_1(P, Q) = \int_{-\infty}^\infty \left| F_P(x) - F_Q(x) \right| dx
+\end{equation}
+To enable comparison across heterogeneous feature scales, we normalize by the baseline reference standard deviation $\sigma_{\text{ref}}$:
+\begin{equation}
+\widetilde{W}_1(P, Q) = \frac{W_1(P, Q)}{\sigma_{\text{ref}}}
+\end{equation}
+An alert condition is flagged when $\widetilde{W}_1(P, Q) \ge 0.15$ alongside $p_{\text{KS}} < 0.05$.
+
+\subsection{Computational Complexity Analysis}
+The system architecture achieves deterministic time bounds:
+\begin{itemize}
+    \item \textbf{Online Feature Retrieval:} Pipelined Redis hash operations (\texttt{HMGET}) operate in $O(1)$ amortized time with respect to the total dataset size $N$, contrasting sharply with $O(N)$ full table scans or $O(\log N)$ disk-based B-Tree indexing.
+    \item \textbf{ONNX Tree Inference:} For an ensemble of $M=50$ decision trees with maximum depth $D=6$, inference traversal complexity is strictly bounded by $O(M \cdot D) = O(300)$ floating-point comparisons per event, guaranteeing sub-millisecond execution.
+\end{itemize}
+
+\section{System Architecture \& Engineering Specifications}
+\label{sec:architecture}
+
+The system decouples synchronous, latency-critical inference execution from asynchronous telemetry and background drift monitoring.
+
+\subsection{Event Ingestion and Messaging Rail}
+The streaming ingestion layer utilizes Apache Kafka / Redpanda~\cite{kreps2011kafka}. Transactions are published with LZ4 compression to topic \texttt{financial.transactions.v1}. Message routing keys are partitioned by \texttt{user\_id}, ensuring strict in-order message delivery per user.
+
+\subsection{Dual-Layer Feature Store}
+The Feast feature store~\cite{feast2024} coordinates offline and online feature views:
+\begin{itemize}
+    \item \textbf{Offline Store:} Backed by DuckDB~\cite{raasveldt2019duckdb} executing point-in-time $ASOF$ joins over Parquet datasets (\texttt{user\_features.parquet} and \texttt{merchant\_features.parquet}).
+    \item \textbf{Online Store:} Backed by Redis 7.2. Entity features are stored under keys \texttt{feast:online:user:\{user\_id\}} and \texttt{feast:online:merchant:\{merchant\_category\}}. Pipelined network execution retrieves rolling average spend, 1-hour transaction velocity, and merchant risk scores in a single round-trip.
+\end{itemize}
+
+\subsection{Inference Serving \& ONNX Graph Optimization}
+The scoring microservice is built on FastAPI and ONNX Runtime~\cite{bai2019onnx}:
+\begin{itemize}
+    \item \textbf{ZipMap Operator Pruning:} Standard conversion tools insert a \texttt{ZipMap} operator that converts tree leaf indices into Python dictionary mappings. We strip this node at the protobuf level, re-routing raw probability tensors directly to output shape $[N, 2]$, avoiding dynamic memory allocations.
+    \item \textbf{Single-Threaded Execution Provider:} The ONNX Runtime session explicitly configures single-threaded execution (\texttt{intra\_op\_num\_threads = 1}, \texttt{inter\_op\_num\_threads = 1}) with \texttt{ORT\_ENABLE\_ALL} graph optimizations, avoiding thread contention under high asynchronous HTTP concurrency.
+    \item \textbf{Asynchronous Telemetry Dispatch:} Telemetry logging is delegated to non-blocking FastAPI \texttt{BackgroundTasks}, preventing telemetry writes from inflating client response latency.
+\end{itemize}
+
+\subsection{12-Dimensional Feature Representation}
+The complete online feature vector $\mathbf{x} \in \mathbb{R}^{12}$ consists of:
+\begin{enumerate}
+    \item \texttt{amount}: Transaction monetary value $a_i$.
+    \item \texttt{user\_avg\_spend\_24h}: Rolling 24h average spend from Redis.
+    \item \texttt{user\_txn\_count\_1h}: Rolling 1h transaction frequency from Redis.
+    \item \texttt{merchant\_risk\_score}: Historical chargeback probability $\in [0.02, 0.78]$.
+    \item \texttt{spend\_to\_avg\_ratio}: Ratio $\frac{a_i}{\max(0, \text{user\_avg\_spend\_24h}) + 1.0}$.
+    \item \texttt{geo\_lat}, \texttt{geo\_long}: Transaction coordinates $(\lambda_i, \phi_i)$.
+    \item \texttt{geo\_dist\_from\_center\_km}: Haversine distance from centroid $(39.8283, -98.5795)$.
+    \item \texttt{hour\_sin}, \texttt{hour\_cos}: $\sin\left(2\pi \frac{t_{\text{hr}}}{24}\right)$ and $\cos\left(2\pi \frac{t_{\text{hr}}}{24}\right)$ diurnal harmonics.
+    \item \texttt{merchant\_cat\_code}: Numerical categorical identifier $\in \{0, \dots, 9\}$.
+    \item \texttt{device\_trust\_score}: Deterministic trust coefficient $\in \{0.08, 0.50, 0.92\}$ based on device fingerprint hashing.
+\end{enumerate}
